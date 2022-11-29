@@ -3,10 +3,8 @@
 
 class SendinBlueTransport implements Transport
 {
-    /**
-     * @var \Sendinblue\Mailin
-     */
-    private $mailin;
+
+    private $api;
 
     /**
      * IP Address of SendinBlue server
@@ -14,9 +12,16 @@ class SendinBlueTransport implements Transport
      */
     private $ipAddress;
 
-    public function __construct($url, $accessKey, $ipAddress = null)
+    public function __construct($accessKey, $ipAddress)
     {
-        $this->mailin = new \Sendinblue\Mailin($url, $accessKey);
+        $config = \SendinBlue\Client\Configuration::getDefaultConfiguration()
+            ->setApiKey('api-key', $accessKey);
+
+        $this->api = new \SendinBlue\Client\Api\TransactionalEmailsApi(
+            new \GuzzleHttp\Client(),
+            $config
+        );
+
         $this->ipAddress = $ipAddress;
     }
 
@@ -37,7 +42,7 @@ class SendinBlueTransport implements Transport
      */
     public function send($app, $identifier, $to, $from, $subject, $html, $plain, $cc, $bcc, $attachments, $headers, $replyTo = null)
     {
-        if (empty($headers)) $headers = array();
+        if (empty($headers)) $headers = [];
 
         //add some extra info for tracking etc
         $headers['X-Mailin-custom'] = $identifier;
@@ -46,8 +51,8 @@ class SendinBlueTransport implements Transport
         if (!empty($this->ipAddress)) {
             $headers['X-Mailin-IP'] = $this->ipAddress;
         }
-        
-        $toAddresses = array();
+
+        $toAddresses = [];
 
         $addresses = explode(',', $to);
 
@@ -56,13 +61,13 @@ class SendinBlueTransport implements Transport
             $toAddresses[$extracted['email']] = $extracted['name'];
         }
 
-        $data = array(
+        $data = new \SendinBlue\Client\Model\SendSmtpEmail([
             'to' => $toAddresses,
-            'from' => array($from),
+            'sender' => [$from],
             'subject' => $subject,
-            'html' => !empty($html) ? $html : $plain,
+            'htmlContent' => !empty($html) ? $html : $plain,
             'headers' => $headers
-        );
+        ]);
 
         if (!empty($attachments)) {
             $data['attachment'] = $attachments;
@@ -88,9 +93,12 @@ class SendinBlueTransport implements Transport
             }
         }
 
-        $result = $this->mailin->send_email($data);
-
-        return $result['code'] === 'success' ? $result['data']['message-id'] : false;
+        try {
+            $result = $this->api->sendTransacEmail($data);
+            return $result->getMessageId();
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     /**
@@ -122,9 +130,9 @@ class SendinBlueTransport implements Transport
             }
         }
 
-        return array(
+        return [
             'name' => $name,
             'email' => $email
-        );
+        ];
     }
 }

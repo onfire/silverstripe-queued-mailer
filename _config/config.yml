@@ -13,9 +13,8 @@ Injector:
 #  MailTransport:
 #    class: 'WebTorque\QueuedMailer\Transport\SendinBlueTransport'
 #    constructor:
-#      0: 'https://api.sendinblue.com/v2.0' #api url
-#      1: 'YOURKEY' #api key
-#      2: 'IPADDRESS' #optional ip address to use to send out email
+#      0: 'YOURKEY' #api key
+#      1: 'IPADDRESS' #optional ip address to use to send out email
 
   QueueProcessor:
     class: 'WebTorque\QueuedMailer\Queue\QueueProcessor'
