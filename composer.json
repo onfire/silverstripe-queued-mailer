@@ -9,7 +9,7 @@
         }
     ],
     "require": {
-        "sendinblue/api-v3-sdk": "^8.3",
+        "sendinblue/api-v3-sdk": "^7.4.1",
         "silverstripe/framework": "^3.1",
         "silverstripe/crontask": "^1.1"
     }
