@@ -1,15 +1,11 @@
-<?php namespace WebTorque\QueuedMailer\Transport;
+<?php
 
+namespace WebTorque\QueuedMailer\Transport;
 
 class SendinBlueTransport implements Transport
 {
-
     private $api;
 
-    /**
-     * IP Address of SendinBlue server
-     * @var string
-     */
     private $ipAddress;
 
     public function __construct($accessKey, $ipAddress)
@@ -52,45 +48,20 @@ class SendinBlueTransport implements Transport
             $headers['X-Mailin-IP'] = $this->ipAddress;
         }
 
-        $toAddresses = [];
-
-        $addresses = explode(',', $to);
-
-        foreach ($addresses as $address) {
-            $extracted = $this->extractEmailToDetails($address);
-            $toAddresses[$extracted['email']] = $extracted['name'];
-        }
-
         $data = new \SendinBlue\Client\Model\SendSmtpEmail([
-            'to' => $toAddresses,
-            'sender' => [$from],
             'subject' => $subject,
+            'to' => $this->createEmailList($to),
+            'sender' => $this->createEmail($from),
             'htmlContent' => !empty($html) ? $html : $plain,
             'headers' => $headers
         ]);
 
+        if (!empty($replyTo)) {
+            $data['replyTo'] = $this->createEmail($replyTo);
+        }
+
         if (!empty($attachments)) {
             $data['attachment'] = $attachments;
-        }
-
-        if (!empty($replyTo)) {
-            $data['replyTo'] = $replyTo;
-        }
-
-        if (!empty($cc)) {
-            $ccs = explode(',', $cc);
-            foreach ($ccs as $aCc) {
-                $ccDetails = $this->extractEmailToDetails($aCc);
-                $data['cc'][$ccDetails['email']] = $ccDetails['name'];
-            }
-        }
-
-        if (!empty($bcc)) {
-            $bccs = explode(',', $bcc);
-            foreach ($bccs as $aBcc) {
-                $bccDetails = $this->extractEmailToDetails($aBcc);
-                $data['bcc'][$bccDetails['email']] = $bccDetails['name'];
-            }
         }
 
         try {
@@ -101,38 +72,21 @@ class SendinBlueTransport implements Transport
         }
     }
 
-    /**
-     * Returns array in the format:
-     * <code>
-     * array(
-     *     'name' => 'John Smith',
-     *     'email' => 'john.smith@email.com'
-     * );
-     * </code>
-     *
-     * @param $to
-     * @return array
-     */
-    protected function extractEmailToDetails($to)
+    // TODO - build foreach
+    public function createEmail($sender)
     {
-        $email = $to;
-        $name = '';
+        $from['email'] = 'jasonloeve@gmail.com';
 
-        if (stripos($to, '<') !== false) {
+        return $from;
+    }
 
-            $parts = explode('<', $to);
-            $name = $parts[0];
-
-            preg_match('/\\<(.*?)\\>/', $to, $matches);
-
-            if (!empty($matches)) {
-                $email = $matches[1];
-            }
-        }
-
-        return [
-            'name' => $name,
-            'email' => $email
+    // TODO - build foreach
+    public function createEmailList($list)
+    {
+        $return[] = [
+            'email' => $list
         ];
+
+        return $return;
     }
 }
