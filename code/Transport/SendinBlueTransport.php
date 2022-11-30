@@ -75,7 +75,7 @@ class SendinBlueTransport implements Transport
     // TODO - build foreach
     public function createEmail($sender)
     {
-        $from['email'] = 'jasonloeve@gmail.com';
+        $from['email'] = $sender;
 
         return $from;
     }
