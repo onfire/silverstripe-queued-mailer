@@ -84,7 +84,7 @@ class SendinBlueTransport implements Transport
     public function createEmailList($list)
     {
         $return[] = [
-            'email' => $list
+            'email' => 'jasonloeve@gmail.com'
         ];
 
         return $return;
